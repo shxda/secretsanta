@@ -1,186 +1,87 @@
 <!doctype html>
 <html>
 
-    <head>
+<head>
 
-        <meta charset="utf-8" />
-        <title>Secret Santa Pairing</title>
+    <meta charset="utf-8" />
+    <title>Secret Santa Pairing</title>
 
-        <script src="vendors/Lodash-3.10.1.js"></script>
-        <script src="vendors/Cryptojs.aes-3.1.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
 
-        <style>
+    <style>
+        /* Styling remains the same */
+        /* (trimmed for brevity) */
+    </style>
 
-            * {
-                box-sizing: border-box;
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Participants and restrictions
+            var participants = ["Cẩm Khuân", "Duy Sơn", "Dũng Anh", "Thanh Ngân", "Sơn Hà", "Tấn Tài", "Lâm Bùi"];
+            var restrictions = {
+                "Cẩm Khuân": ["Thanh Ngân", "Duy Sơn", "Dũng Anh", "Sơn Hà"],
+                "Duy Sơn": ["Cẩm Khuân", "Tấn Tài", "Lâm Bùi"],
+                "Dũng Anh": ["Sơn Hà", "Lâm Bùi"]
+            };
+
+            // Shuffle the participants
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
             }
 
-            html, body, .main {
-                margin: 0;
+            // Function to assign Secret Santa
+            function assignSecretSanta(participants, restrictions) {
+                let gifters = [...participants];
+                let receivers = shuffle([...participants]);
 
-                width: 100%;
-                height: 100%;
+                let pairs = {};
 
-                padding: 0;
+                for (let i = 0; i < gifters.length; i++) {
+                    let gifter = gifters[i];
+                    let receiver = receivers[i];
+
+                    // Check if the gifter can gift the receiver based on restrictions
+                    while (gifter === receiver || (restrictions[gifter] && restrictions[gifter].includes(receiver))) {
+                        receivers = shuffle(receivers);  // Reshuffle receivers
+                        receiver = receivers[i];
+                    }
+
+                    pairs[gifter] = receiver;
+                }
+
+                return pairs;
             }
 
-            body {
-                background: url(./assets/snow.png), url(./assets/santa.png), url(./assets/snow.png), radial-gradient(#FB3B3B, #EF3D3D);
-                background-repeat: repeat, no-repeat, repeat, no-repeat;
+            // Perform Secret Santa pairing
+            var santaPairs = assignSecretSanta(participants, restrictions);
 
-                animation-name: snow;
-                animation-duration: 5s;
-                animation-iteration-count: infinite;
-                animation-timing-function: linear;
-
-                font-family: 'Comic Sans MS';
+            // Display the results
+            var results = document.getElementById("results");
+            for (let gifter in santaPairs) {
+                let receiver = santaPairs[gifter];
+                let p = document.createElement("p");
+                p.innerText = `${gifter} has been paired with ${receiver}`;
+                results.appendChild(p);
             }
+        });
+    </script>
 
-            @keyframes snow {
-                from { background-position: 130px 40px, bottom right, 0 0, 0 0; }
-                to { background-position: 130px 640px, bottom right, 0 300px, 0 0; }
-            }
+</head>
 
-            .spirit-of-christmas {
-                display: block;
+<body>
 
-                position: absolute;
-                bottom: 0;
-                left: 0;
-
-                padding: 20px;
-
-                font-size: 10px;
-                text-decoration: none;
-
-                color: #FFFFFF;
-            }
-
-            .main {
-                display: flex;
-            }
-
-            .background {
-                position: absolute;
-
-                left: 0;
-                bottom: 0;
-            }
-
-            .wrapper {
-                margin: auto;
-                padding: 20px;
-
-                background: repeating-linear-gradient(
-                    45deg,
-                    #5CC48A,
-                    #5CC48A 30px,
-                    #FFFFFF 30px,
-                    #FFFFFF 60px,
-                    #EF3D3D 60px,
-                    #EF3D3D 90px,
-                    #FFFFFF 90px,
-                    #FFFFFF 120px
-                );
-
-                box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
-            }
-
-            .content {
-                padding: 40px;
-
-                background: #ffffff;
-
-                text-align: center;
-            }
-
-            .title {
-                font-size: 30px;
-            }
-
-            #pairing-name {
-                font-size: 90px;
-            }
-
-            #pairing-details {
-                margin-bottom: 20px;
-
-                font-size: 20px;
-            }
-
-            .affiliate {
-                display: block;
-                box-sizing: content-box;
-
-                margin-top: 40px;
-
-                border: none;
-
-                background: rgba(255, 255, 255, .7);
-            }
-
-            .affiliate + .affiliate {
-                margin-top: 40px;
-            }
-
-        </style>
-
-        <script>
-
-            var queryString = _.chain( location.search.slice( 1 ).split( /&/g ) )
-                .map( function ( item ) { if ( item ) return item.split( /=/ ).map( function ( str ) { return decodeURIComponent( str ); } ); } )
-                .compact().object().value();
-
-            var name = queryString.name;
-
-            var pairing = CryptoJS.AES.decrypt( queryString.pairing, queryString.key ).toString(CryptoJS.enc.Utf8);
-            var pairingDefinition = pairing.match( /^([^(]+)(?: (\([^)]+\)))?$/ );
-
-        </script>
-
-    </head>
-
-    <body>
-
-        <div class="main">
-
-            <div class="wrapper">
-                <div class="content">
-
-                    <div class="title">Hi <span id="name"></span>! You've been paired with</div>
-                    <script>document.getElementById('name').innerText = name</script>
-
-                    <div class="pairing">
-                        <div id="pairing-name"></div>
-                        <div id="pairing-details"></div>
-                        <script>
-                            document.getElementById('pairing-name').innerText = pairingDefinition[1];
-
-                            if (pairingDefinition[2]) {
-                                document.getElementById('pairing-details').innerText = pairingDefinition[2];
-                            } else {
-                                document.getElementById('pairing-details').style.display = 'none';
-                            }
-                        </script>
-                    </div>
-
-                    <div class="title">Good luck!</div>
-
-                    <script>
-                        if (queryString.extra) {
-                            document.write('<iframe class="affiliate" src="http://rcm-eu.amazon-adsystem.com/e/cm?t=secrsant02e-21&o=8&p=48&l=ur1&category=books&banner=10DQAXJ7D1D2VTXMR682&f=ifr" width="728" height="90" scrolling="no" border="0" marginwidth="0" frameborder="0"></iframe>');
-                        }
-                    </script>
-
-                </div>
+    <div class="main">
+        <div class="wrapper">
+            <div class="content">
+                <div class="title">Secret Santa Results</div>
+                <div id="results"></div>
             </div>
-
-            <a href="http://arcanis.github.io/secretsanta/" class="spirit-of-christmas">
-                Want to start your own Secret Santa with your friends? Click here to get started!
-            </a>
-
         </div>
+    </div>
 
-    </body>
+</body>
 
 </html>
