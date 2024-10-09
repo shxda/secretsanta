@@ -2,71 +2,125 @@
 <html>
 
 <head>
-
     <meta charset="utf-8" />
     <title>Secret Santa Pairing</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
 
     <style>
-        /* Styling remains the same */
-        /* (trimmed for brevity) */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body, .main {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+        }
+
+        body {
+            background: radial-gradient(#FB3B3B, #EF3D3D);
+            font-family: 'Comic Sans MS';
+        }
+
+        .main {
+            display: flex;
+        }
+
+        .wrapper {
+            margin: auto;
+            padding: 20px;
+            background: #FFFFFF;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+        }
+
+        .content {
+            padding: 40px;
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 30px;
+        }
+
+        #pairing-name {
+            font-size: 90px;
+        }
+
+        #pairing-details {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
     </style>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Participants and restrictions
-            var participants = ["Cẩm Khuân", "Duy Sơn", "Dũng Anh", "Thanh Ngân", "Sơn Hà", "Tấn Tài", "Lâm Bùi"];
-            var restrictions = {
-                "Cẩm Khuân": ["Thanh Ngân", "Duy Sơn", "Dũng Anh", "Sơn Hà"],
-                "Duy Sơn": ["Cẩm Khuân", "Tấn Tài", "Lâm Bùi"],
-                "Dũng Anh": ["Sơn Hà", "Lâm Bùi"]
-            };
+        var participants = [
+            { name: "Cẩm Khuân", restrictions: ["Thanh Ngân", "Duy Sơn", "Dũng Anh"] },
+            { name: "Duy Sơn", restrictions: ["Cẩm Khuân", "Tấn Tài", "Lâm Bùi"] },
+            { name: "Dũng Anh", restrictions: ["Sơn Hà", "Lâm Bùi", "Nhật Trí"] },
+            { name: "Hoàng Bách", restrictions: ["Xuân Vinh", "Thành Thái", "Sơn Hà"] },
+            { name: "Hương Giang", restrictions: ["Như Kiều", "Vân Khanh", "Thanh Ngân"] },
+            { name: "Lâm Bùi", restrictions: ["Sơn Hà", "Thành Thái", "Thanh Ngân"] },
+            { name: "Nhật Trí", restrictions: ["Sơn Hà", "Dũng Anh", "Thanh Ngân"] },
+            { name: "Như Kiều", restrictions: ["Dũng Anh", "Thanh Ngân", "Hương Giang", "Thuý Hằng"] },
+            { name: "Quỳnh Như", restrictions: ["Sơn Hà"] },
+            { name: "Sơn Hà", restrictions: ["Dũng Anh", "Nhật Trí", "Hoàng Bách", "Tấn Tài"] },
+            { name: "Tấn Tài", restrictions: ["Cẩm Khuân"] },
+            { name: "Thanh Ngân", restrictions: ["Cẩm Khuân", "Như Kiều", "Vân Khanh", "Hương Giang", "Thuý Hằng"] },
+            { name: "Thành Thái", restrictions: ["Lâm Bùi"] },
+            { name: "Thuý Hằng", restrictions: ["Thanh Ngân"] },
+            { name: "Vân Khanh", restrictions: ["Thanh Ngân"] },
+            { name: "Xuân Vinh", restrictions: ["Hoàng Bách"] }
+        ];
 
-            // Shuffle the participants
-            function shuffle(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function findPairings() {
+            let givers = participants.slice();
+            let receivers = participants.slice();
+            let pairings = [];
+
+            shuffle(givers);
+            shuffle(receivers);
+
+            for (let i = 0; i < givers.length; i++) {
+                let giver = givers[i];
+
+                let validReceivers = receivers.filter(receiver => 
+                    receiver.name !== giver.name && !giver.restrictions.includes(receiver.name)
+                );
+
+                if (validReceivers.length === 0) {
+                    return findPairings(); // Retry if no valid receiver
                 }
-                return array;
+
+                let receiver = validReceivers[0]; // Select the first valid receiver
+                pairings.push({ giver: giver.name, receiver: receiver.name });
+
+                receivers = receivers.filter(r => r.name !== receiver.name);
             }
 
-            // Function to assign Secret Santa
-            function assignSecretSanta(participants, restrictions) {
-                let gifters = [...participants];
-                let receivers = shuffle([...participants]);
+            return pairings;
+        }
 
-                let pairs = {};
-
-                for (let i = 0; i < gifters.length; i++) {
-                    let gifter = gifters[i];
-                    let receiver = receivers[i];
-
-                    // Check if the gifter can gift the receiver based on restrictions
-                    while (gifter === receiver || (restrictions[gifter] && restrictions[gifter].includes(receiver))) {
-                        receivers = shuffle(receivers);  // Reshuffle receivers
-                        receiver = receivers[i];
-                    }
-
-                    pairs[gifter] = receiver;
-                }
-
-                return pairs;
-            }
-
-            // Perform Secret Santa pairing
-            var santaPairs = assignSecretSanta(participants, restrictions);
-
-            // Display the results
-            var results = document.getElementById("results");
-            for (let gifter in santaPairs) {
-                let receiver = santaPairs[gifter];
+        window.onload = function () {
+            let pairings = findPairings();
+            let resultDiv = document.getElementById("pairings");
+            pairings.forEach(pair => {
                 let p = document.createElement("p");
-                p.innerText = `${gifter} has been paired with ${receiver}`;
-                results.appendChild(p);
-            }
-        });
+                p.innerText = pair.giver + " -> " + pair.receiver;
+                resultDiv.appendChild(p);
+            });
+        }
     </script>
 
 </head>
@@ -76,8 +130,8 @@
     <div class="main">
         <div class="wrapper">
             <div class="content">
-                <div class="title">Secret Santa Results</div>
-                <div id="results"></div>
+                <div class="title">Secret Santa Pairings</div>
+                <div id="pairings"></div>
             </div>
         </div>
     </div>
